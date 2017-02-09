@@ -56,6 +56,10 @@ contains
   !==================================================================!
 
     use w90_parameters, only :num_wann, num_kpts
+
+    implicit none
+
+    integer :: n, m
     
     do n=1,num_kpts
        do m=1,num_wann
@@ -68,11 +72,12 @@ contains
   !==================================================================!
   subroutine autoproj_calc_u_matrix_obstruction()
   !==================================================================!
+    implicit none
 
     call io_error('Automatic projections using the obstruction matrix method not implemented yet')
     
   end subroutine autoproj_calc_u_matrix_obstruction
 
   
-end module w90_sitesym
+end module w90_autoproj
   

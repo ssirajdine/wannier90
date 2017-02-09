@@ -296,8 +296,8 @@ module w90_parameters
   ! - add them also to the 'validate_autoproj_flavour' function below
   ! - implement the right logic in the autoproj_calc_u_matrix in autoproj.F90
   ! - remember to write the value always in lower case
-  character(len=20), parameter :: AUTOPROJ_FLAVOUR_BLOCH_PHASES = 'bloch_phases'
-  character(len=20), parameter :: AUTOPROJ_FLAVOUR_OBSTRUCTION_MATRIX = 'obstruction_matrix'
+  character(len=20), parameter, public :: AUTOPROJ_FLAVOUR_BLOCH_PHASES = 'bloch_phases'
+  character(len=20), parameter, public :: AUTOPROJ_FLAVOUR_OBSTRUCTION_MATRIX = 'obstruction_matrix'
   
   character(len=20), public, save :: restart
   logical,           public, save :: write_r2mn
@@ -5086,6 +5086,8 @@ contains
   !==================================================================!
   subroutine validate_autoproj_flavour()
   !==================================================================!
+    use w90_io,        only : io_error
+
     implicit none
 
     if ( (auto_proj_flavour .ne. AUTOPROJ_FLAVOUR_BLOCH_PHASES) .and. &
