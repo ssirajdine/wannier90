@@ -1732,7 +1732,12 @@ contains
          call io_error('Error: Cannot use auto_proj and use_bloch_phases at the same time')
     
     call param_get_keyword('auto_proj_flavour',found,c_value=auto_proj_flavour)
-    call validate_autoproj_flavour()
+    ! I must read it anyway above to avoid messages that the flag is not expected,
+    ! but I validate its content only if auto_proj is true, because the default value
+    ! is (currently) not a valid value (empty string)
+    if (auto_proj) then
+       call validate_autoproj_flavour()
+    end if
     
     search_shells                 = 12
     call param_get_keyword('search_shells',found,i_value=search_shells)
