@@ -289,6 +289,16 @@ module w90_parameters
 
   logical,           public, save :: calc_only_A
   logical,           public, save :: use_bloch_phases
+  logical,           public, save :: auto_proj
+  character(len=20), public, save :: auto_proj_flavour
+
+  ! If you add more constants:
+  ! - add them also to the 'validate_autoproj_flavour' function below
+  ! - implement the right logic in the autoproj_calc_u_matrix in autoproj.F90
+  ! - remember to write the value always in lower case
+  character(len=20), parameter :: AUTOPROJ_FLAVOUR_BLOCH_PHASES = 'bloch_phases'
+  character(len=20), parameter :: AUTOPROJ_FLAVOUR_OBSTRUCTION_MATRIX = 'obstruction_matrix'
+  
   character(len=20), public, save :: restart
   logical,           public, save :: write_r2mn
   logical,           public, save :: guiding_centres
@@ -1711,9 +1721,19 @@ contains
 
     use_bloch_phases = .false.
     call param_get_keyword('use_bloch_phases',found,l_value=use_bloch_phases)
+    
     if(disentanglement .and. use_bloch_phases) &
          call io_error('Error: Cannot use bloch phases for disentanglement')
 
+    ! Automatic projections
+    auto_proj = .false.
+    call param_get_keyword('auto_proj',found,l_value=auto_proj)
+    if(auto_proj .and. use_bloch_phases) &
+         call io_error('Error: Cannot use auto_proj and use_bloch_phases at the same time')
+    
+    call param_get_keyword('auto_proj_flavour',found,c_value=auto_proj_flavour)
+    call validate_autoproj_flavour()
+    
     search_shells                 = 12
     call param_get_keyword('search_shells',found,i_value=search_shells)
     if (search_shells<0) call io_error('Error: search_shells must be positive')       
@@ -1901,6 +1921,8 @@ contains
     endif
 
     ! Projections
+    ! Initialize to zero in case the block is not present 
+    num_proj = 0
     call param_get_block_length('projections',found,i_temp)
     if (found) call param_get_projections
     if (guiding_centres .and. .not. found .and. .not.(gamma_only.and.use_bloch_phases)) & 
@@ -2354,6 +2376,10 @@ contains
     write(stdout,'(1x,a46,10x,L8,13x,a1)')   '|  Write on-site energies <0n|H|0n> to file  :',write_hr_diag,'|'    
     write(stdout,'(1x,a46,10x,L8,13x,a1)')   '|  Use guiding centre to control phases      :',guiding_centres,'|'
     write(stdout,'(1x,a46,10x,L8,13x,a1)')   '|  Use phases for initial projections        :',use_bloch_phases,'|'
+    write(stdout,'(1x,a46,10x,L8,13x,a1)')   '|  Use automatic projections                 :',auto_proj,'|'
+    if (auto_proj) then
+       write(stdout,'(1x,a46,10x,a20,1x,a1)')   '|  Flavour of automatic projections          :',auto_proj_flavour,'|'
+    end if
     if(guiding_centres .or. iprint>2) then
     write(stdout,'(1x,a46,10x,I8,13x,a1)')   '|  Iterations before starting guiding centres:',num_no_guide_iter,'|'
     write(stdout,'(1x,a46,10x,I8,13x,a1)')   '|  Iterations between using guiding centres  :',num_guide_cycles,'|'
@@ -5057,6 +5083,21 @@ contains
   end subroutine param_get_keyword_kpath
 
 
+  !==================================================================!
+  subroutine validate_autoproj_flavour()
+  !==================================================================!
+    implicit none
+
+    if ( (auto_proj_flavour .ne. AUTOPROJ_FLAVOUR_BLOCH_PHASES) .and. &
+         (auto_proj_flavour .ne. AUTOPROJ_FLAVOUR_OBSTRUCTION_MATRIX)) then
+
+       call io_error('Unknown or invalid auto_proj_flavour')
+       
+    end if
+    
+  end subroutine validate_autoproj_flavour
+
+  
     !===========================================!
     subroutine param_memory_estimate
     !===========================================!

@@ -19,7 +19,8 @@ module w90_overlap
   use w90_constants, only : dp,cmplx_0,cmplx_1
   use w90_parameters, only : disentanglement
   use w90_io, only : stdout
-
+  use w90_autoproj, only: autoproj_calc_u_matrix
+  
   implicit none
  
   private
@@ -42,7 +43,8 @@ contains
 
     use w90_parameters, only : num_bands, num_wann, num_kpts, nntot, nncell, nnlist,&
                            devel_flag, u_matrix, m_matrix, a_matrix, timing_level, &
-                           m_matrix_orig, u_matrix_opt, cp_pp, use_bloch_phases, gamma_only ![ysl]
+                           m_matrix_orig, u_matrix_opt, cp_pp, use_bloch_phases, &
+                           auto_proj, gamma_only ![ysl]
     use w90_io,         only : io_file_unit, io_error, seedname, io_stopwatch
 
     implicit none
@@ -170,7 +172,19 @@ contains
        close(mmn_in)
 
 
-       if(.not. use_bloch_phases) then
+       if(use_bloch_phases) then
+
+          do n=1,num_kpts
+             do m=1,num_wann
+                u_matrix(m,m,n)=cmplx_1
+             end do
+          end do
+
+       elseif (auto_proj) then
+
+          call autoproj_calc_u_matrix()
+          
+       else
 
           ! Read A_matrix from file wannier.amn
           amn_in=io_file_unit()
@@ -209,14 +223,6 @@ contains
           
           close(amn_in)
           
-       else
-          
-          do n=1,num_kpts
-             do m=1,num_wann
-                u_matrix(m,m,n)=cmplx_1
-             end do
-          end do
-
        end if
        
        ! If post-processing a Car-Parinello calculation (gamma only)
@@ -244,7 +250,8 @@ contains
 !~       endif
 !
 !~[aam]
-       if ( (.not.disentanglement).and.(.not.cp_pp).and.(.not.use_bloch_phases) ) then
+       if ( (.not.disentanglement).and.(.not.cp_pp).and.(.not.use_bloch_phases).and. &
+            (.not.auto_proj)) then
           if (.not.gamma_only) then
              call overlap_project()
           else
