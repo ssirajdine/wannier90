@@ -9,6 +9,7 @@ dis_mix_ratio     = 1.d0
 num_iter          = 50
 num_print_cycles  = 10
 
+restart		  = plot
 bands_plot	  = true
 auto_proj	  = true
 auto_proj_flavour = obstruction_matrix
@@ -17,6 +18,10 @@ Begin Atoms_Frac
 Si  -0.25   0.75  -0.25
 Si   0.00   0.00   0.00 
 End Atoms_Frac
+    
+Begin Projections     
+Si : sp3 
+End Projections       
     
 begin kpoint_path
 L 0.50000  0.50000 0.5000 G 0.00000  0.00000 0.0000
