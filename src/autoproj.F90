@@ -73,13 +73,13 @@ contains
   subroutine autoproj_calc_u_matrix_obstruction()
   !==================================================================!
 
-    use w90_parameters, only :kpt_latt, m_matrix, nntot, num_wann, num_kpts
+    use w90_parameters, only :kpt_latt, m_matrix, nntot, num_wann, num_kpts, mp_grid
     
     implicit none
 
     !call io_error('Automatic projections using the obstruction matrix method not implemented yet')
     
-    integer :: n, m, K, N1, N2, N3
+    integer :: i, n, m, K, N1, N2, N3
     integer, dimension(1:3) :: array_ijk = [0, 0, 0]
 
     N1 = mp_grid(1)
@@ -175,6 +175,51 @@ contains
 
   end subroutine ijk_to_K
 
+  !==================================================================!
+  subroutine propagate(A0,As)
+  !==================================================================!
+  
+  use w90_parameters, only :num_kpts, mp_grid, m_matrix, num_wann, nntot
+  use w90_constants, only :dp
+
+  implicit none
+
+  integer :: i, j, k, N1, N2, N3, ierr
+  complex(kind=dp), dimension(:,:,:), allocatable, intent(out) :: As
+  complex(kind=dp), dimension(:,:), intent(in) :: A0
+  !m_matrix(num_bands,num_bands,nntot,num_kpts)
+
+  if (.not.allocated(As)) then
+     allocate(As(num_kpts,num_wann,num_wann),stat=ierr)
+     if (ierr/=0) call io_error('Error allocating As in autoproj propagate()')
+  endif
+  
+  As(1,:,:) = A0(:,:)
+  do i=2,num_kpts
+     !As(i,:,:) = normalise(m_matrix(kpts(i),kpts(i-1))*As(i-1,:,:))
+  enddo
+
+  return
+  end subroutine propagate
+  
+  !==================================================================!
+  subroutine normalise(A,An)
+  !==================================================================!
+  
+  use w90_constants, only :dp
+  
+  implicit none
+
+  complex(kind=dp), dimension(:,:), intent(in) :: A
+  complex(kind=dp), dimension(:,:), allocatable, intent(out) :: An
+
+  
+  An(:,:) = A(:,:)
+  !USV = svd(A)
+  !return U*V'
+
+  return
+  end subroutine normalise
 
 
 end module w90_autoproj
